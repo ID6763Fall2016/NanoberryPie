@@ -7,7 +7,20 @@
 var express    = require('express')        // call express
 var app        = express()                 // define our app using express
 
-app.use('/c', express.static("challenge"))
+var tingo = require('tingodb')();
+var db = new tingo.Db(__dirname + '/db', {});
+
+var stats = db.collection("bathroom")
+setInterval(dummy_insert, 5000)
+
+function dummy_insert() {
+    stats.insert({
+        "amonia": 20 + Math.random() * 100
+      , "in": Math.random() * 20
+      , "out": Math.random * 20
+    })
+    console.log("one sample added!")
+}
 
 // get port
 var nconf = require("nconf")
