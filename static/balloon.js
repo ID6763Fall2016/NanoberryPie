@@ -8,7 +8,8 @@ socket.on("history", function(list) {
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
-    d3.select("#ppl").text(rec.out)
+    d3.select("#ppl_out").text(rec.out)
+    d3.select("#ppl_in").text(rec.in)
     d3.select("#conc").text(rec.conc)
 })
 var width = 640
