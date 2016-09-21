@@ -42,16 +42,18 @@ chalk = require("chalk")
 console.log(chalk.yellow('Magic happens on port %d'), port)
 
 // IO socket stuff
+var id2skt = {}
+var cnt = 0
 io.on("connection", function(socket) {
     socket.on("c2s", function(data) {
         console.log("Got client response: " + data)
     })
-    var beat_id = setInterval(function() {
-        socket.emit("s2c", Math.random() * 100)
-    }, 1000)
+    var id = cnt
+    cnt ++
+    id2skt[id] = socket
     socket.on("disconnect", function() {
-        console.log("Client disconnected! ")
-        clearInterval(beat_id)
+        console.log("Client disconnected: %d, clear sockt @%d. ", id, id)
+        delete id2skt[id]
     })
 })
 
@@ -137,6 +139,11 @@ function inspect() {
             var conc = res.readInt16LE()
             var rec = { "conc": conc, "out": output_people, "in": input_people }
             stats.insert(rec)
+            // Iterate all sockets to all clients
+            for(var id in id2skt) {
+                id2skt[id].emit("latest", rec)
+                console.log("Latest %s sent to client %d", JSON.stringify(rec), id)
+            }
         })
     })
 }

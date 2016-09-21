@@ -1,8 +1,15 @@
 var socket = io();
+var growing = []
+var history = null
 console.log(socket)
 socket.on("s2c", function(data) {
     console.log("Got data: " + data)
     socket.emit("c2s", "Roger " + data)
+})
+socket.on("latest", function(rec) {
+    growing.push(rec)
+    d3.select("#ppl").text(rec.in - rec.out)
+    d3.select("#conc").text(rec.conc)
 })
 var width = 640
 var height = 360
