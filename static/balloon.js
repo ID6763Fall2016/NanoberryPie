@@ -1,14 +1,14 @@
 var socket = io();
 var growing = []
 var past_entries = null
-socket.on("history", function(data) {
-    console.log("Got data: " + data.length)
+socket.on("history", function(list) {
+    past_entries = list
+    console.log("got history of " + list.length + " entries")
     socket.emit("history_ack", true)
-	past_entries = data
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
-    d3.select("#ppl").text(rec.in - rec.out)
+    d3.select("#ppl").text(rec.out)
     d3.select("#conc").text(rec.conc)
 })
 var width = 640
