@@ -133,7 +133,7 @@ function inspect() {
         }
         wire.readBytes(0x00,length, function(err2, res) {
             if(err2) {
-                console.log("Failed to initiate i2c reading:\n\t " + err2)
+                console.log("Failed to retrieve i2c reading:\n\t " + err2)
                 return
             }
             var conc = res.readInt16LE()
