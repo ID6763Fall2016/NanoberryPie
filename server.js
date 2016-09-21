@@ -14,12 +14,12 @@ var io = require('socket.io')(http_server);
 var tingo = require('tingodb')();
 var db = new tingo.Db(__dirname + '/db', {});
 
-var stats = db.collection("bathroom")
-setInterval(dummy_insert, 5000)
+var stats = db.collection("evn")
+setInterval(inspect, 1000)
 
 function dummy_insert() {
     stats.insert({
-        "amonia": 20 + Math.random() * 100
+        "conc": 20 + Math.random() * 100
       , "in": Math.random() * 20
       , "out": Math.random * 20
     })
@@ -54,3 +54,90 @@ io.on("connection", function(socket) {
         clearInterval(beat_id)
     })
 })
+
+
+var GPIO = require('onoff').Gpio
+var led = new GPIO(18, 'out')
+var led2 = new GPIO(22, 'out')
+var pir1 = new GPIO(4, 'in', 'both')
+var pir2 = new GPIO(27, 'in', 'both')
+var input_people = 0
+var output_people = 0
+
+//define vars for i2c
+var i2c = require('i2c')
+var address = 0x48 
+var wire = new i2c(address, {device: '/dev/i2c-1'})
+var length = 2
+
+function light(err, state) {
+  
+  // 1 == pressed, 0 == not pressed
+  if(state == 1) {
+    // turn LED on
+    led.writeSync(1);
+
+       if(pir2_state == 1)
+    {
+      
+       output_people = output_people+1;
+       pir2_state = 0;
+    }
+   else
+    {pir1_state = 1; }
+ 
+   console.log("motion detected!")
+  } else {
+    // turn LED off
+    led.writeSync(0);
+    pir1_state = 0;
+  }
+  
+}
+
+function light2(err, state) {
+  
+  // check the state of the button
+  // 1 == pressed, 0 == not pressed
+  if(state == 1) {
+    // turn LED on
+    led2.writeSync(1);
+    if(pir1_state == 1)
+    {
+       //pir2_state = 1;
+       input_people = input_people+1;
+       pir1_state = 0;
+    }
+   else
+    {pir2_state = 1; }
+    
+    console.log("...........................motion detected!")
+  } 
+}
+
+// pass the callback function to the
+// as the first argument to watch()
+pir1.watch(light)
+pir2.watch(light2)
+
+function inspect() {
+    //console.log("in = "+ input_people + " | out = " + output_people);
+    //read analog sensor value
+    wire.writeBytes(0x01, [0xC1,0x83], function(err,res) {
+        //console.log("error write:"+err)
+        if(err) {
+            console.log("Failed to initiate i2c reading:\n\t " + err)
+            return
+        }
+        wire.readBytes(0x00,length, function(err2, res) {
+            if(err2) {
+                console.log("Failed to initiate i2c reading:\n\t " + err2)
+                return
+            }
+            var conc = res.readInt16LE()
+            var rec = { "conc": conc, "out": output_people, "in": input_people }
+            stats.insert(rec)
+        })
+    })
+}
+
