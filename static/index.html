@@ -1,0 +1,114 @@
+<html>
+<head>
+	<meta charset="UTF-8"><meta name="robots" content="noindex">
+	<script type="text/javascript" src="lib/d3.js"></script>
+	<script type="text/javascript" src="lib/socket.io.js"></script>
+	<link rel="stylesheet prefetch" href="//codepen.io/assets/reset/normalize.css">
+<style class="cp-pen-styles">p,div {
+    font-family: "lucida grande",tahoma,verdana,arial,sans-serif;
+    font-size: 13px;
+    line-height: 25px;
+}
+
+
+.t2 { font-size: 150%; }
+
+/*float*/
+.fl { float: left; }
+.fr { float: right; }
+.fn { float: none; }
+
+.title { padding-left: 260px;}
+
+.y-axis path {
+  fill: none;
+  stroke: none;
+}
+.y-axis line, .string,
+.x-axis path, .x-axis line {
+  fill: none;
+  stroke: #797979;
+  shape-rendering: crispEdges;
+}
+
+.xLabel, .value { text-anchor: middle; }
+
+.y-unit {
+  alignment-baseline: middle;
+}
+
+.y-unit-right {
+  text-anchor: end;
+}
+
+.wide-tick line{
+  stroke-width: 7px;
+}
+
+.numb, .y-axis text, .x-axis text {
+  pointer-events: none;
+}
+
+.brush .extent {
+  stroke: #FFF;
+  shape-rendering: crispEdges;
+  fill: #E6E7E8;
+  opacity: 1.0;
+}
+
+.clickable {
+  cursor: hand;
+}
+
+.d3-tip {
+  line-height: 1;
+  font-weight: bold;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  border-radius: 6px;
+}
+
+text { font-size: 12px; font-family: "Helvetica", "Sans Serif", "Tohama"; }
+.ctext { text-align: "middle" }
+.hide { display: none; }
+
+.dbg-vis-border {
+  border: #797979 solid 1px;
+}
+.dbg-svg-green {
+  fill: #00ff00;
+}
+
+.bold {
+  font-weight: bold;
+}
+
+// layout stuff
+.mt1 {
+  margin-top: 25px;
+}
+.pt1 {
+  padding-top: 15px;
+}
+.pr2 {
+  padding-right: 30px;
+}
+
+.ml2 {
+  margin-left: 40px;
+}
+</style></head>
+<body>
+
+<div class="pt1 mt1 ml2"><label for="cut_off">Show items above this value</label>
+<input type=range id="cut_off" min="0" value="4" max="4" step="0.01" oninput="document.getElementById('cut_off_output').value=value" />
+<output for="divide_value" id="cut_off_output">4</output>
+<button id="filter_go" onclick="filter_selection()">Filter, D3!</button>
+</div>
+<div id="svg_container">
+</div>
+<script type="text/javascript" src="balloon.js"></script>
+</body>
+
+</html>

@@ -6,6 +6,10 @@
 // call the packages we need
 var express    = require('express')        // call express
 var app        = express()                 // define our app using express
+app.use('/m', express.static("static"))
+var http_server = require("http").createServer(app)
+
+var io = require('socket.io')(http_server);
 
 var tingo = require('tingodb')();
 var db = new tingo.Db(__dirname + '/db', {});
@@ -32,7 +36,21 @@ nconf.defaults({
 })
 var port = nconf.get("port")
 
-app.listen(port)
+http_server.listen(port)
 
 chalk = require("chalk")
 console.log(chalk.yellow('Magic happens on port %d'), port)
+
+// IO socket stuff
+io.on("connection", function(socket) {
+    socket.on("c2s", function(data) {
+        console.log("Got client response: " + data)
+    })
+    var beat_id = setInterval(function() {
+        socket.emit("s2c", Math.random() * 100)
+    }, 1000)
+    socket.on("disconnect", function() {
+        console.log("Client disconnected! ")
+        clearInterval(beat_id)
+    })
+})
