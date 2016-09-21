@@ -5,6 +5,7 @@ socket.on("history", function(list) {
     past_entries = list
     console.log("got history of " + list.length + " entries")
     socket.emit("history_ack", true)
+    render_history()
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
@@ -34,9 +35,11 @@ var vis = svg_node.append("g")
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
 
-  x_scale = d3.scale.ordinal()
-    .domain(demo_data.map(function(d) { return d["state"] }))
-    .rangeRoundBands([0, width])
+function render_history() {
+  x_scale = d3.time.scale()
+    .domain(d3.extent(past_entries, function(d) { return new Date(d["ts"]) }))
+    .range([0, 180])
+  console.log(x_scale.domain())
 //  var x_axis = d3.svg.axis().orient("bottom").scale(x_scale)
 //    .tickSize(3, 2, 0)
 //  vis.append("g").attr("class", "x-axis").call(x_axis)
@@ -46,9 +49,10 @@ var y_scale // will be used in filter_selection() outside that callback
     .range([height, 0])
 //  var y_axis = d3.svg.axis().orient("left").scale(y_scale)
 //  vis.append("g").attr("class", "y-axis").call(y_axis)
-  var color_scale = d3.scale.category10().domain(x_scale.domain())
+  //var color_scale = d3.scale.category10().domain(x_scale.domain())
 
-  var circle_container = vis.append("g").attr("id", "vis_content")
+  var content_layer = vis.append("g").attr("id", "vis_content")
+}
   /*
   var groups = circle_container.selectAll("g")
     .data(demo_data.filter(function(d) {
