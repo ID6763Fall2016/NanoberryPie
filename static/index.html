@@ -98,16 +98,27 @@ text { font-size: 12px; font-family: "Helvetica", "Sans Serif", "Tohama"; }
 .ml2 {
   margin-left: 40px;
 }
+
+.svg-container {
+    display: inline-block;
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; /* aspect ratio */
+    vertical-align: top;
+    overflow: hidden;
+}
+.svg-content-responsive {
+    display: inline-block;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+
 </style></head>
 <body>
 <div>
     <p id="conc">--</p>
     <p id="ppl">--</p>
-</div>
-<div class="pt1 mt1 ml2"><label for="cut_off">Show items above this value</label>
-<input type=range id="cut_off" min="0" value="4" max="4" step="0.01" oninput="document.getElementById('cut_off_output').value=value" />
-<output for="divide_value" id="cut_off_output">4</output>
-<button id="filter_go" onclick="filter_selection()">Filter, D3!</button>
 </div>
 <div id="svg_container">
 </div>

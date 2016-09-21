@@ -1,10 +1,10 @@
 var socket = io();
 var growing = []
-var history = null
-console.log(socket)
-socket.on("s2c", function(data) {
-    console.log("Got data: " + data)
-    socket.emit("c2s", "Roger " + data)
+var past_entries = null
+socket.on("history", function(data) {
+    console.log("Got data: " + data.length)
+    socket.emit("history_ack", true)
+	past_entries = data
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
@@ -20,9 +20,13 @@ var padding = {
   "right": 30
 }
 var svg_node = d3.select("#svg_container").append("svg")
-  .attr("width", width + padding.left + padding.right)
-  .attr("height", height + padding.top + padding.bottom)
-  .attr("calss", "dbg-vis-border")
+  //.attr("width", width + padding.left + padding.right)
+  //.attr("height", height + padding.top + padding.bottom)
+  //.attr("calss", "dbg-vis-border")
+  .attr("preserveAspectRatio", "xMinYMin meet")
+  .attr("viewBox", "0 0 " + (width + padding.left + padding.right) + " " + (height + padding.top + padding.bottom))
+  //class to make it responsive
+  .classed("svg-content-responsive", true); 
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
 
