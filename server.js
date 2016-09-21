@@ -14,7 +14,7 @@ var io = require('socket.io')(http_server);
 var tingo = require('tingodb')();
 var db = new tingo.Db(__dirname + '/db', {});
 
-var stats = db.collection("evn")
+var stats = db.collection("room")
 setInterval(inspect, 1000)
 
 function dummy_insert() {
@@ -45,18 +45,21 @@ console.log(chalk.yellow('Magic happens on port %d'), port)
 var id2skt = {}
 var cnt = 0
 io.on("connection", function(socket) {
-    socket.on("c2s", function(data) {
-        console.log("Got client response: " + data)
-    })
     var id = cnt
     cnt ++
+    console.log("Client %d connected", id)
     id2skt[id] = socket
     socket.on("disconnect", function() {
         console.log("Client disconnected: %d, clear sockt @%d. ", id, id)
         delete id2skt[id]
     })
+    socket.on("history_ack", function(data) {
+        console.log("Client %d got history successfully", id)
+    })
+    stats.find().sort({"ts": 1}).limit(3600 * 5).toArray(function(err, records){
+        socket.emit("history", records)
+    })
 })
-
 
 var GPIO = require('onoff').Gpio
 var led = new GPIO(18, 'out')
@@ -65,6 +68,8 @@ var pir1 = new GPIO(4, 'in', 'both')
 var pir2 = new GPIO(27, 'in', 'both')
 var input_people = 0
 var output_people = 0
+var pir1_state = 0
+var pir2_state = 0
 
 //define vars for i2c
 var i2c = require('i2c')
@@ -82,8 +87,8 @@ function light(err, state) {
        if(pir2_state == 1)
     {
       
-       output_people = output_people+1;
-       pir2_state = 0;
+       output_people = output_people+1
+       pir2_state = 0
     }
    else
     {pir1_state = 1; }
@@ -137,12 +142,12 @@ function inspect() {
                 return
             }
             var conc = res.readInt16LE()
-            var rec = { "conc": conc, "out": output_people, "in": input_people }
+            var rec = { "conc": conc, "out": output_people, "in": input_people, "ts": new Date() }
             stats.insert(rec)
             // Iterate all sockets to all clients
             for(var id in id2skt) {
                 id2skt[id].emit("latest", rec)
-                console.log("Latest %s sent to client %d", JSON.stringify(rec), id)
+                //console.log("Latest %s sent to client %d", JSON.stringify(rec), id)
             }
         })
     })
