@@ -43,6 +43,8 @@ svg_node.call(tip)
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
 var r0 = Math.min(width / 2, height) * .75
+var legend_layer = svg_node.append("g")
+	
 var arc_layer = vis.append("g").attr("id", "arc_layer")
     .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
 arc_layer.append("path")
@@ -129,6 +131,32 @@ function render() {
   conc2color = d3.scale.linear()
     .domain(min_max)
     .range(["#11afea", "#EAEAEA", "#dc0f79"])
+  var p5 = min_max.slice()
+  p5.splice(1, 0, (p5[0] + p5[1]) / 2)
+  p5.splice(3, 0, (p5[2] + p5[3]) / 2)
+  var l5 = ["Fresh", "", "OK", "", "Gross"]
+  console.log(p5)
+  var s = 32
+  var pd = 2
+  legend_layer.selectAll("rect").data(p5)
+  	.enter().append("rect")
+	.style("fill", function(d) { return conc2color(d) })
+	.attr("x", function(d, i) { return width - (5 - i) * s + pd / 2 })
+	.attr("y", 2 * s)
+	.attr("width", s - pd / 2)
+	.attr("height", s / 4)
+
+  legend_layer.selectAll("text").data(l5)
+  	.enter().append("text")
+	//.style("fill", function(d) { return conc2color(d) })
+	.attr("x", function(d, i) { return width - (5 - i) * s + s / 2})
+	.attr("y", 2 * s)
+	.attr("dy", -3)
+	.style("text-anchor", "middle")
+    .style("alignment-baseline", "bottom")
+    .style("font-size", 7)
+	.text(function(d) { return d })
+
   console.log(x_scale.domain())
   y_scale = d3.scale.linear()
     .domain([0, d3.max(shaped, function(d) { return d["di"] })])
