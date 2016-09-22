@@ -32,6 +32,8 @@ var svg_node = d3.select("#svg_container").append("svg")
   .attr("viewBox", "0 0 " + (width + padding.left + padding.right) + " " + (height + padding.top + padding.bottom))
   //class to make it responsive
   .classed("svg-content-responsive", true); 
+var tip = d3.tip().attr("class", "d3-tip").html(desc);
+svg_node.call(tip)
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
 var r0 = Math.min(width / 2, height) * .8
@@ -54,6 +56,11 @@ var arc = d3.svg.arc()
         .innerRadius(0.9 * r0)
         .outerRadius(r0)
 socket.emit("pick", { "start": new Date(0), "cases": n })
+
+function desc(d) {
+    return "<p> Poeple: " + d["di"] + "</p>" + 
+        "<p> Odor concentration: " + d["conc"] + "</p>"
+}
 
 function render() {
   var shaped = past_entries.map(function(d, i, elements) {
@@ -86,11 +93,13 @@ function render() {
   console.log(x_scale.domain())
   y_scale = d3.scale.linear()
     .domain([0, d3.max(shaped, function(d) { return d["di"] })])
-    .range([0, -20])
+    .range([0, -32])
 
   var groups = arc_layer.selectAll("g .slice").data(shaped)
   var entering_groups = groups.enter().append("g")
     .attr("class", "slice")
+    .on("mouseover", tip.show)
+    .on("mouseout", tip.hide)
   //var paths = arc_layer.selectAll("path .slice").data(shaped)
   //paths.enter().append("path")
   entering_groups.append("path")
