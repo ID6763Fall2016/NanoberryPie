@@ -90,8 +90,9 @@ var arc = d3.svg.arc()
 socket.emit("pick", { "start": new Date(0), "cases": n })
 
 function desc(d) {
-    return "<p> Poeple: " + d["di"] + "</p>" + 
-        "<p> Odor concentration: " + (d["conc"] / 100) + "</p>"
+    return "<p> Number of poeple inside: " + d["di"] + "</p>" + 
+        "<p> Odor concentration: " + (d["conc"] / 100) + "</p>" +
+        "<p> " + (d["ts"]) + "</p>"
 }
 
 function render() {
@@ -141,7 +142,7 @@ function render() {
       .enter().append("line").attr("class", "tick")
     .attr("x1", 0).attr("y1", 0)
     .attr("x2", 0).attr("y2", function(d) { return 0 == d.getMinutes()? -4 : -2 })
-    .attr("stroke", "#797979")
+    .attr("stroke", "#A0A0A0")
     .attr("stoke-width", 1)
     .attr("transform", function(d) {
         return "rotate(" + (rotate_scale(d)) + 
@@ -149,7 +150,7 @@ function render() {
     })
   tick_layer.selectAll("text .tick").data(hours)
       .enter().append("text").attr("class", "tick")
-    .attr("fill", "#797979")
+    .attr("fill", "#A0A0A0")
     .style("text-anchor", "middle")
     .style("alignment-baseline", "middle")
     .style("font-size", 7)
@@ -182,11 +183,11 @@ function render() {
 
   entering_groups.append("circle")
     .attr("class", "head")
-    .attr("r", function(d) { return d["di"] > 0? 2 : 0 })
+    .attr("r", function(d) { return d["di"] > 0? 2.5 : 0 })
     .attr("fill", "#797979")
     .attr("transform", function(d) {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
-            ") translate(0," + (- r0 - 3 + y_scale(d["di"])) + ")"
+            ") translate(0," + (- r0 - 3 - 1.25 + y_scale(d["di"])) + ")"
     })
 //  entering_groups.append("text")
 //    .attr("class", "stamp")
