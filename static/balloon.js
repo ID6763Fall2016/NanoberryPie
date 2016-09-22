@@ -13,10 +13,10 @@ socket.on("pick", function(res) {
 socket.on("latest", function(rec) {
     growing.push(rec)
     if(rec["conc"] < 0) rec["conc"] += 65536 // convert negative int to unit
-    d3.select("#ppl_out").text(rec.out)
-    d3.select("#ppl_in").text(rec.in)
+    d3.select("#ppl_out_tf").text(rec.out + " out")
+    d3.select("#ppl_in_tf").text(rec.in + " in")
     //d3.select("#conc").text(rec.conc)
-    d3.select("#conc_tf").text(rec.conc)
+    d3.select("#conc_tf").text((rec.conc / 100).toFixed(0))
     d3.select("#conc_group").transition().attr("transform", "translate(0, " + bubble_y_scale(rec.conc) + ")")
     if(null == past_entries) return // thiere is no conc2color yet
     d3.select("#conc_bubble").transition().attr("stroke", function(d) { return conc2color(rec["conc"]) })
@@ -67,6 +67,13 @@ var conc_text = conc_g.append("text")
     .style("text-anchor", "middle")
     .style("alignment-baseline", "middle")
     .style("font-size", 20)
+var ppl_group = dyn_layer.append("g")
+ppl_group.append("text").attr("id", "ppl_in_tf")
+    .attr("dx", -30)
+ppl_group.append("text").attr("id", "ppl_out_tf")
+    .attr("dx", 30)
+var tick_layer = vis.append("g")
+    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
 var n = 120 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
@@ -83,7 +90,7 @@ socket.emit("pick", { "start": new Date(0), "cases": n })
 
 function desc(d) {
     return "<p> Poeple: " + d["di"] + "</p>" + 
-        "<p> Odor concentration: " + d["conc"] + "</p>"
+        "<p> Odor concentration: " + (d["conc"] / 100) + "</p>"
 }
 
 function render() {
@@ -118,6 +125,35 @@ function render() {
   y_scale = d3.scale.linear()
     .domain([0, d3.max(shaped, function(d) { return d["di"] })])
     .range([0, -32])
+  var hours = []
+  var ts = new Date(x_scale.domain()[0])
+  ts.setMinutes(0), ts.setSeconds(0)
+  for(;ts <= x_scale.domain()[1]; ts.setHours(ts.getHours() + 1)) {
+      var ti = new Date(ts)
+      //console.log(ti)
+      hours.push(ti)
+  }
+  tick_layer.selectAll("line .tick").data(hours)
+      .enter().append("line").attr("class", "tick")
+    .attr("x1", 0).attr("y1", 0)
+    .attr("x2", 0).attr("y2", -4)
+    .attr("stroke", "#797979")
+    .attr("stoke-width", 1)
+    .attr("transform", function(d) {
+        return "rotate(" + (rotate_scale(d)) + 
+            ") translate(0," + (- r0 - 50) + ")"
+    })
+  tick_layer.selectAll("text .tick").data(hours)
+      .enter().append("text").attr("class", "tick")
+    .attr("fill", "#797979")
+    .style("text-anchor", "middle")
+    .style("alignment-baseline", "middle")
+    .style("font-size", 7)
+    .attr("transform", function(d) {
+        return "rotate(" + (rotate_scale(d)) + 
+            ") translate(0," + (- r0 - 60) + ")"
+    })
+    .text(date2hhmm)
 
   var groups = arc_layer.selectAll("g .slice").data(shaped)
   var entering_groups = groups.enter().append("g")
@@ -148,13 +184,13 @@ function render() {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
             ") translate(0," + (- r0 - 3 + y_scale(d["di"])) + ")"
     })
-  entering_groups.append("text")
-    .attr("class", "stamp")
-    .attr("transform", function(d) {
-        return "rotate(" + (rotate_scale(d["ts"])) + 
-            ") translate(0," + (- r0 - 60) + ") rotate(90)"
-    })
-    .text(date2hhmmss)
+//  entering_groups.append("text")
+//    .attr("class", "stamp")
+//    .attr("transform", function(d) {
+//        return "rotate(" + (rotate_scale(d["ts"])) + 
+//            ") translate(0," + (- r0 - 60) + ") rotate(90)"
+//    })
+//    .text(date2hhmmss)
 }
 
 function date2hhmmss(d) {
@@ -166,5 +202,14 @@ function date2hhmmss(d) {
     var s = ts.getSeconds()
     if(s < 10) s = "0" + s
     return [h, m, s].join(":")
+}
+
+function date2hhmm(d) {
+    var ts = d
+    var h = ts.getHours()
+    if(h < 10) h = "0" + h
+    var m = ts.getMinutes()
+    if(m < 10) m = "0" + m
+    return [h, m].join(":")
 }
 
