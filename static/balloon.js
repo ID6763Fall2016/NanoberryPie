@@ -12,9 +12,15 @@ socket.on("pick", function(res) {
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
+    if(rec["conc"] < 0) rec["conc"] += 65536 // convert negative int to unit
     d3.select("#ppl_out").text(rec.out)
     d3.select("#ppl_in").text(rec.in)
-    d3.select("#conc").text(rec.conc)
+    //d3.select("#conc").text(rec.conc)
+    d3.select("#conc_tf").text(rec.conc)
+    d3.select("#conc_group").transition().attr("transform", "translate(0, " + bubble_y_scale(rec.conc) + ")")
+    if(null == past_entries) return // thiere is no conc2color yet
+    d3.select("#conc_bubble").transition().attr("stroke", function(d) { return conc2color(rec["conc"]) })
+    d3.select("#conc_tf").transition().style("fill", function(d) { return conc2color(rec["conc"]) })
 })
 var width = 640
 var height = 360
@@ -44,9 +50,27 @@ arc_layer.append("path")
     .style("fill", "none")
     .attr("stroke", "#EEEEEE")
     .attr("stoke-width", 2)
+var dyn_layer = vis.append("g").attr("id","dyn_layer")
+    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
+var conc_g = dyn_layer.append("g").attr("id", "conc_group")
+var conc_bubble = conc_g.append("circle")
+    .attr("id", "conc_bubble")
+    .attr("r", r0 / 5)
+    .attr("cy", -r0 / 5)
+    .attr("fill", "none")
+    .attr("stroke", "#DADADA")
+var conc_text = conc_g.append("text")
+    .attr("id", "conc_tf")
+    .text("***")
+    .attr("class", "")
+    .attr("dy", -r0 / 5)
+    .style("text-anchor", "middle")
+    .style("alignment-baseline", "middle")
+    .style("font-size", 20)
 var n = 120 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
+var bubble_y_scale = d3.scale.linear().domain([0, 65536 / 4]).range([0, -40])
 var conc2color
 var arc = d3.svg.arc()
         .startAngle(function(d, i) { return x_scale(d["ts"]) })
