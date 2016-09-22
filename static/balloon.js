@@ -38,11 +38,12 @@ var r0 = Math.min(width, height) / 2
 arc_layer.append("path")
     .attr("d", "M" + (-r0) + " 0 A " + r0 + " " + r0 + " 0 0 1 " + r0 + " 0")
     .style("fill", "none")
-    .attr("stroke", "#797979")
+    .attr("stroke", "#EEEEEE")
     .attr("stoke-width", 2)
-var n = 60 // partitions of the half circle
+var n = 120 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
+var conc2color
 var arc = d3.svg.arc()
         .startAngle(function(d, i) { return x_scale(d["ts"]) })
         .endAngle(function(d, i) { return x_scale(d["end"]) })
@@ -57,6 +58,7 @@ function render_history() {
       return (0 == i % step) 
   }).map(function(d, i, elements) {
       var obj = {"in": +d["in"], "out": +d["out"], "conc": +d["conc"], "ts": new Date(d["ts"])}
+      if(0 > obj["conc"]) obj["conc"] = 65536 + obj["conc"] // int to unit
       if(i < n) obj["end"] = new Date(elements[i + 1]["ts"])
       return obj
   })
@@ -68,13 +70,18 @@ function render_history() {
         d3.max(shaped, function(d) { return d["end"] })
     ])
     .range([-Math.PI / 2, Math.PI / 2])
+  var min_max = d3.extent(shaped, function(d) { return d["conc"] })
+  min_max.splice(1, 0, (min_max[0] + min_max[1]) / 2)
+  conc2color = d3.scale.linear()
+    .domain(min_max)
+    .range(["#11afea", "#EAEAEA", "#dc0f79"])
   console.log(x_scale.domain())
   var paths = arc_layer.selectAll("path .slice").data(shaped)
   paths.enter().append("path")
     .attr("class", "slice")
     .attr("d", arc)
-    .style("fill", function(d, i) { return 0 == i % 2? "#797979" : "#303030" })
-    .style("opacity", 0.5)
+    .style("fill", function(d, i) { return conc2color(d["conc"]) })
+    .style("opacity", 1)
 
 }
   /*
