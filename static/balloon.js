@@ -36,7 +36,7 @@ var tip = d3.tip().attr("class", "d3-tip").html(desc);
 svg_node.call(tip)
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
-var r0 = Math.min(width / 2, height) * .8
+var r0 = Math.min(width / 2, height) * .75
 var arc_layer = vis.append("g").attr("id", "arc_layer")
     .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
 arc_layer.append("path")
@@ -124,6 +124,23 @@ function render() {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
             ") translate(0," + (- r0 - 3 + y_scale(d["di"])) + ")"
     })
-      
+  entering_groups.append("text")
+    .attr("class", "stamp")
+    .attr("transform", function(d) {
+        return "rotate(" + (rotate_scale(d["ts"])) + 
+            ") translate(0," + (- r0 - 60) + ") rotate(90)"
+    })
+    .text(date2hhmmss)
+}
+
+function date2hhmmss(d) {
+    var ts = d["ts"]
+    var h = ts.getHours()
+    if(h < 10) h = "0" + h
+    var m = ts.getMinutes()
+    if(m < 10) m = "0" + m
+    var s = ts.getSeconds()
+    if(s < 10) s = "0" + s
+    return [h, m, s].join(":")
 }
 
