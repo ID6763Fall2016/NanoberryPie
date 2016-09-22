@@ -202,11 +202,15 @@ function render() {
     .attr("fill", "#797979")
     .attr("transform", function(d) {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
-            ") translate(0," + (- r0 - 3 - 1.25 + y_scale(d["di"])) + ")"
+            ") translate(0," + (- r0 + y_scale(d["di"])) + ")"
     })
   arc_layer.selectAll(".head")
     .transition().duration(200).delay(function(d, i) { return i * 10 + 200 })
     .attr("r", function(d) { return d["di"] > 0? 2.5 : 0 })
+    .attr("transform", function(d) {
+        return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
+            ") translate(0," + (- r0 - 3 - 1.25 + y_scale(d["di"])) + ")"
+    })
 }
 
 function date2hhmmss(d) {
