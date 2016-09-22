@@ -5,6 +5,7 @@ socket.on("history", function(list) {
     past_entries = list
     console.log("got history of " + list.length + " entries")
     socket.emit("history_ack", true)
+    console.log("history received! ")
     render_history()
 })
 socket.on("latest", function(rec) {
@@ -31,27 +32,50 @@ var svg_node = d3.select("#svg_container").append("svg")
   .classed("svg-content-responsive", true); 
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
-
+var arc_layer = vis.append("g").attr("id", "arc_layer")
+    .attr("transform", "translate(" + (width / 2) + ", " + (height / 2) + ")")
+var r0 = Math.min(width, height) / 2
+arc_layer.append("path")
+    .attr("d", "M" + (-r0) + " 0 A " + r0 + " " + r0 + " 0 0 1 " + r0 + " 0")
+    .style("fill", "none")
+    .attr("stroke", "#797979")
+    .attr("stoke-width", 2)
+var n = 60 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
+var arc = d3.svg.arc()
+        .startAngle(function(d, i) { return x_scale(d["ts"]) })
+        .endAngle(function(d, i) { return x_scale(d["end"]) })
+        .padAngle(0)
+        .padRadius(r0 / 3)
+        .innerRadius(0.9 * r0)
+        .outerRadius(r0)
 
 function render_history() {
+  var step = Math.ceil(past_entries.length / (n + 1))
+  var shaped = past_entries.filter(function(d, i, elements) {
+      return (0 == i % step) 
+  }).map(function(d, i, elements) {
+      var obj = {"in": +d["in"], "out": +d["out"], "conc": +d["conc"], "ts": new Date(d["ts"])}
+      if(i < n) obj["end"] = new Date(elements[i + 1]["ts"])
+      return obj
+  })
+  shaped.splice(-1, 1)
+  console.log("Number of cases: " + shaped.length)
   x_scale = d3.time.scale()
-    .domain(d3.extent(past_entries, function(d) { return new Date(d["ts"]) }))
-    .range([0, 180])
+    .domain([
+        d3.min(shaped, function(d) { return d["ts"] }), 
+        d3.max(shaped, function(d) { return d["end"] })
+    ])
+    .range([-Math.PI / 2, Math.PI / 2])
   console.log(x_scale.domain())
-//  var x_axis = d3.svg.axis().orient("bottom").scale(x_scale)
-//    .tickSize(3, 2, 0)
-//  vis.append("g").attr("class", "x-axis").call(x_axis)
-//    .attr("transform", "translate(0," + height + ")")
-  y_scale = d3.scale.linear()
-    .domain([0, 4])
-    .range([height, 0])
-//  var y_axis = d3.svg.axis().orient("left").scale(y_scale)
-//  vis.append("g").attr("class", "y-axis").call(y_axis)
-  //var color_scale = d3.scale.category10().domain(x_scale.domain())
+  var paths = arc_layer.selectAll("path .slice").data(shaped)
+  paths.enter().append("path")
+    .attr("class", "slice")
+    .attr("d", arc)
+    .style("fill", function(d, i) { return 0 == i % 2? "#797979" : "#303030" })
+    .style("opacity", 0.5)
 
-  var content_layer = vis.append("g").attr("id", "vis_content")
 }
   /*
   var groups = circle_container.selectAll("g")
