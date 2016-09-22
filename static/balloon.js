@@ -87,6 +87,12 @@ var arc = d3.svg.arc()
         .padRadius(r0 / 3)
         .innerRadius(0.9 * r0)
         .outerRadius(r0)
+function arc_tween(s0, s1) {
+  var i = d3.interpolate(s0, s1);
+  return function(t) {
+    return arc(i(t));
+  };
+}
 socket.emit("pick", { "start": new Date(0), "cases": n })
 
 function desc(d) {
@@ -168,34 +174,39 @@ function render() {
   //var paths = arc_layer.selectAll("path .slice").data(shaped)
   //paths.enter().append("path")
   entering_groups.append("path")
-    .attr("d", arc)
-    .style("fill", function(d, i) { return conc2color(d["conc"]) })
+    //.attr("d", arc)
+    .attr("class", "conc")
     .style("opacity", 1)
+  arc_layer.selectAll(".conc")
+    .transition().duration(200).delay(function(d, i) { return i * 10 })
+    .style("fill", function(d, i) { return conc2color(d["conc"]) })
+    .attrTween("d", function(d) { return arc_tween({"di":0, "do":0, "ts": d["ts"], "end": d["ts"]}, d) })
+
   entering_groups.append("line")
+    .attr("class", "ppl")
     .attr("x1", 0).attr("y1", 0)
-    .attr("x2", 0).attr("y2", function(d) { return y_scale(d["di"]) })
+    .attr("x2", 0).attr("y2", 0)
     .attr("stroke", "#797979")
     .attr("stoke-width", 1)
     .attr("transform", function(d) {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
             ") translate(0," + (- r0 - 3) + ")"
     })
+  arc_layer.selectAll(".ppl")
+    .transition().duration(200).delay(function(d, i) { return i * 10 + 100 })
+    .attr("y2", function(d) { return y_scale(d["di"]) })
 
   entering_groups.append("circle")
     .attr("class", "head")
-    .attr("r", function(d) { return d["di"] > 0? 2.5 : 0 })
+    .attr("r", 0)
     .attr("fill", "#797979")
     .attr("transform", function(d) {
         return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
             ") translate(0," + (- r0 - 3 - 1.25 + y_scale(d["di"])) + ")"
     })
-//  entering_groups.append("text")
-//    .attr("class", "stamp")
-//    .attr("transform", function(d) {
-//        return "rotate(" + (rotate_scale(d["ts"])) + 
-//            ") translate(0," + (- r0 - 60) + ") rotate(90)"
-//    })
-//    .text(date2hhmmss)
+  arc_layer.selectAll(".head")
+    .transition().duration(200).delay(function(d, i) { return i * 10 + 200 })
+    .attr("r", function(d) { return d["di"] > 0? 2.5 : 0 })
 }
 
 function date2hhmmss(d) {
