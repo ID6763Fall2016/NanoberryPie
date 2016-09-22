@@ -77,7 +77,7 @@ var tick_layer = vis.append("g")
 var n = 120 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
-var bubble_y_scale = d3.scale.linear().domain([0, 65536 / 4]).range([0, -40])
+var bubble_y_scale = d3.scale.linear().domain([0, 65536 / 4]).range([0, -25])
 var conc2color
 var arc = d3.svg.arc()
         .startAngle(function(d, i) { return x_scale(d["ts"]) })
@@ -132,11 +132,14 @@ function render() {
       var ti = new Date(ts)
       //console.log(ti)
       hours.push(ti)
+      var t2 = new Date(ts)
+      t2.setMinutes(30)
+      hours.push(t2)
   }
   tick_layer.selectAll("line .tick").data(hours)
       .enter().append("line").attr("class", "tick")
     .attr("x1", 0).attr("y1", 0)
-    .attr("x2", 0).attr("y2", -4)
+    .attr("x2", 0).attr("y2", function(d) { return 0 == d.getMinutes()? -4 : -2 })
     .attr("stroke", "#797979")
     .attr("stoke-width", 1)
     .attr("transform", function(d) {
@@ -209,6 +212,7 @@ function date2hhmm(d) {
     var h = ts.getHours()
     if(h < 10) h = "0" + h
     var m = ts.getMinutes()
+    if(m != 0) return ""
     if(m < 10) m = "0" + m
     return [h, m].join(":")
 }
