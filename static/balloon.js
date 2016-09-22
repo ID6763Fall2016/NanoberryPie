@@ -1,12 +1,14 @@
 var socket = io();
 var growing = []
 var past_entries = null
-socket.on("history", function(list) {
-    past_entries = list
-    console.log("got history of " + list.length + " entries")
-    socket.emit("history_ack", true)
-    console.log("history received! ")
-    render_history()
+var steps = 1
+socket.on("pick", function(res) {
+    past_entries = res["picked"]
+    steps = res["steps"]
+    console.log("picked " + past_entries.length + " cases, steps = " + steps)
+    console.log("picked received! ")
+    socket.emit("pick_ack", true)
+    render()
 })
 socket.on("latest", function(rec) {
     growing.push(rec)
@@ -32,9 +34,9 @@ var svg_node = d3.select("#svg_container").append("svg")
   .classed("svg-content-responsive", true); 
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
+var r0 = Math.min(width / 2, height) * .8
 var arc_layer = vis.append("g").attr("id", "arc_layer")
-    .attr("transform", "translate(" + (width / 2) + ", " + (height / 2) + ")")
-var r0 = Math.min(width, height) / 2
+    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
 arc_layer.append("path")
     .attr("d", "M" + (-r0) + " 0 A " + r0 + " " + r0 + " 0 0 1 " + r0 + " 0")
     .style("fill", "none")
@@ -51,15 +53,14 @@ var arc = d3.svg.arc()
         .padRadius(r0 / 3)
         .innerRadius(0.9 * r0)
         .outerRadius(r0)
+socket.emit("pick", { "start": new Date(0), "cases": n })
 
-function render_history() {
-  var step = Math.ceil(past_entries.length / (n + 1))
-  var shaped = past_entries.filter(function(d, i, elements) {
-      return (0 == i % step) 
-  }).map(function(d, i, elements) {
+function render() {
+  var shaped = past_entries.map(function(d, i, elements) {
       var obj = {"in": +d["in"], "out": +d["out"], "conc": +d["conc"], "ts": new Date(d["ts"])}
       if(0 > obj["conc"]) obj["conc"] = 65536 + obj["conc"] // int to unit
       if(i < n) obj["end"] = new Date(elements[i + 1]["ts"])
+      if(i > 0) obj["di"] -= elements[i - 1]["in"], obj["do"] -= elements[i - 1]["out"]
       return obj
   })
   shaped.splice(-1, 1)
@@ -72,6 +73,7 @@ function render_history() {
     .range([-Math.PI / 2, Math.PI / 2])
   var min_max = d3.extent(shaped, function(d) { return d["conc"] })
   min_max.splice(1, 0, (min_max[0] + min_max[1]) / 2)
+  console.log(min_max)
   conc2color = d3.scale.linear()
     .domain(min_max)
     .range(["#11afea", "#EAEAEA", "#dc0f79"])

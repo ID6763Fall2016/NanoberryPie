@@ -17,14 +17,6 @@ var db = new tingo.Db(__dirname + '/db', {});
 var stats = db.collection("room")
 setInterval(inspect, 1000)
 
-function dummy_insert() {
-    stats.insert({
-        "conc": 20 + Math.random() * 100
-      , "in": Math.random() * 20
-      , "out": Math.random * 20
-    })
-    console.log("one sample added!")
-}
 
 // get port
 var nconf = require("nconf")
@@ -44,6 +36,7 @@ console.log(chalk.yellow('Magic happens on port %d'), port)
 // IO socket stuff
 var id2skt = {}
 var cnt = 0
+var pick_cache = null
 io.on("connection", function(socket) {
     var id = cnt
     cnt ++
@@ -53,12 +46,34 @@ io.on("connection", function(socket) {
         console.log("Client disconnected: %d, clear sockt @%d. ", id, id)
         delete id2skt[id]
     })
-    socket.on("history_ack", function(data) {
+    socket.on("pick", function(params) {
+        if(null != pick_cache) {
+            console.log("Using cache...")
+            socket.emit("pick", pick_cache)
+            return
+        }
+        console.log("pick request: %s", JSON.stringify(params))
+        var start = new Date(params["start"])
+        var n = +params["cases"] + 1
+        stats.find({ "ts": { "$gt": start } }).sort({ "ts": 1 }).limit(3600 * 24)
+            .toArray(function(err, rec_list) {
+                var steps = Math.ceil(rec_list.length / n)
+                console.log("Sampling every %d cases", steps)
+                var picked = []
+                for(var i = 0; i < rec_list.length; i += steps) {
+                    picked.push(rec_list[i])
+                }
+                pick_cache = { "picked": picked, "steps": steps }
+                console.log("Start emitting picked list")
+                socket.emit("pick", pick_cache)
+            })
+    })
+    socket.on("pick_ack", function(data) {
         console.log("Client %d got history successfully", id)
     })
-    stats.find().sort({"ts": 1}).limit(3600 * 5).toArray(function(err, records){
+    /*stats.find().sort({"ts": 1}).limit(3600 * 5).toArray(function(err, records){
         socket.emit("history", records)
-    })
+    })*/
 })
 
 var GPIO = require('onoff').Gpio
