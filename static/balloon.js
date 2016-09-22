@@ -57,20 +57,26 @@ socket.emit("pick", { "start": new Date(0), "cases": n })
 
 function render() {
   var shaped = past_entries.map(function(d, i, elements) {
-      var obj = {"in": +d["in"], "out": +d["out"], "conc": +d["conc"], "ts": new Date(d["ts"])}
+      var obj = {"di": +d["in"], "do": +d["out"], "conc": +d["conc"], "ts": new Date(d["ts"])}
       if(0 > obj["conc"]) obj["conc"] = 65536 + obj["conc"] // int to unit
       if(i < n) obj["end"] = new Date(elements[i + 1]["ts"])
       if(i > 0) obj["di"] -= elements[i - 1]["in"], obj["do"] -= elements[i - 1]["out"]
+      if(obj["di"] < 0) obj["di"] = 0
+      if(obj["do"] < 0) obj["do"] = 0
       return obj
   })
   shaped.splice(-1, 1)
   console.log("Number of cases: " + shaped.length)
+  console.log(shaped)
   x_scale = d3.time.scale()
     .domain([
         d3.min(shaped, function(d) { return d["ts"] }), 
         d3.max(shaped, function(d) { return d["end"] })
     ])
     .range([-Math.PI / 2, Math.PI / 2])
+  var rotate_scale = d3.time.scale()
+    .domain(x_scale.domain())
+    .range([-90, 90])
   var min_max = d3.extent(shaped, function(d) { return d["conc"] })
   min_max.splice(1, 0, (min_max[0] + min_max[1]) / 2)
   console.log(min_max)
@@ -78,36 +84,37 @@ function render() {
     .domain(min_max)
     .range(["#11afea", "#EAEAEA", "#dc0f79"])
   console.log(x_scale.domain())
-  var paths = arc_layer.selectAll("path .slice").data(shaped)
-  paths.enter().append("path")
+  y_scale = d3.scale.linear()
+    .domain([0, d3.max(shaped, function(d) { return d["di"] })])
+    .range([0, -20])
+
+  var groups = arc_layer.selectAll("g .slice").data(shaped)
+  var entering_groups = groups.enter().append("g")
     .attr("class", "slice")
+  //var paths = arc_layer.selectAll("path .slice").data(shaped)
+  //paths.enter().append("path")
+  entering_groups.append("path")
     .attr("d", arc)
     .style("fill", function(d, i) { return conc2color(d["conc"]) })
     .style("opacity", 1)
-
-}
-  /*
-  var groups = circle_container.selectAll("g")
-    .data(demo_data.filter(function(d) {
-    // Try to convert string to int, parseInt() also works
-      var gpa = +d["Average-GPA"]
-      // Write filter conditions so that the gpa is a number and in [0, 4]
-      return !isNaN(gpa) && 0 <= gpa && gpa <= 4
-    })).enter()
-    .append("g")
+  entering_groups.append("line")
+    .attr("x1", 0).attr("y1", 0)
+    .attr("x2", 0).attr("y2", function(d) { return y_scale(d["di"]) })
+    .attr("stroke", "#797979")
+    .attr("stoke-width", 1)
     .attr("transform", function(d) {
-      return "translate(" + (x_scale(d["state"]) + x_scale.rangeBand() / 2 ) + ",0)" 
+        return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
+            ") translate(0," + (- r0 - 3) + ")"
     })
-  groups.append("line")
-    .style("stroke-width", 1)
-    .style("stroke", function(d) { return color_scale(d["state"]) })
-    .attr("x1", 0).attr("y1", function(d) { return y_scale(d["Average-GPA"]) })
-    .attr("x2", 0).attr("y2", height)
 
-  groups.append("circle")
-    .attr("cx", 0)
-    .attr("cy", function(d) { return y_scale(d["Average-GPA"]) })
-    .attr("r", 10)
-    .style("fill", function(d) { return color_scale(d["state"]) })
-    */
+  entering_groups.append("circle")
+    .attr("class", "head")
+    .attr("r", function(d) { return d["di"] > 0? 2 : 0 })
+    .attr("fill", "#797979")
+    .attr("transform", function(d) {
+        return "rotate(" + (rotate_scale(d["ts"]) / 2 + rotate_scale(d["end"]) / 2) + 
+            ") translate(0," + (- r0 - 3 + y_scale(d["di"])) + ")"
+    })
+      
+}
 
