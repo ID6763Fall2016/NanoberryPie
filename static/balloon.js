@@ -23,11 +23,11 @@ socket.on("latest", function(rec) {
     d3.select("#conc_tf").transition().style("fill", function(d) { return conc2color(rec["conc"]) })
 })
 var width = 640
-var height = 360
+var height = 340
 var padding = {
-  "top": 30,
+  "top": 10,
   "left": 30,
-  "bottom": 30,
+  "bottom": 10,
   "right": 30
 }
 var svg_node = d3.select("#svg_container").append("svg")
@@ -42,18 +42,19 @@ var tip = d3.tip().attr("class", "d3-tip").html(desc);
 svg_node.call(tip)
 var vis = svg_node.append("g")
   .attr("transform", "translate(" + padding.left + "," + padding.right + ")")
-var r0 = Math.min(width / 2, height) * .75
+var cy0 = Math.min(width / 2, height)
+var r0 = cy0 * .75
 var legend_layer = svg_node.append("g")
 	
 var arc_layer = vis.append("g").attr("id", "arc_layer")
-    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
+    .attr("transform", "translate(" + (width / 2) + ", " + cy0 + ")")
 arc_layer.append("path")
     .attr("d", "M" + (-r0) + " 0 A " + r0 + " " + r0 + " 0 0 1 " + r0 + " 0")
     .style("fill", "none")
     .attr("stroke", "#EEEEEE")
     .attr("stoke-width", 2)
 var dyn_layer = vis.append("g").attr("id","dyn_layer")
-    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
+    .attr("transform", "translate(" + (width / 2) + ", " + cy0 + ")")
 var conc_g = dyn_layer.append("g").attr("id", "conc_group")
 var conc_bubble = conc_g.append("circle")
     .attr("id", "conc_bubble")
@@ -76,7 +77,7 @@ ppl_group.append("text").attr("id", "ppl_in_tf")
 ppl_group.append("text").attr("id", "ppl_out_tf")
     .attr("dx", 30)
 var tick_layer = vis.append("g")
-    .attr("transform", "translate(" + (width / 2) + ", " + height + ")")
+    .attr("transform", "translate(" + (width / 2) + ", " + cy0 + ")")
 var n = 120 // partitions of the half circle
 var x_scale // created in d3.csv()'s callback, and
 var y_scale // will be used in filter_selection() outside that callback
@@ -140,11 +141,11 @@ function render() {
   var pd = 2
   var lg = legend_layer.selectAll("g").data(p5)
   	.enter().append("g")
-	.attr("transform", function(d, i) { return "translate(" + (width - 5 * s - 5 * pd + i * s + i * pd) + ", 0)" })
+	.attr("transform", function(d, i) { return "translate(" + (width - 5 * s - 5 * pd + i * s + i * pd) + ", " + (s) + ")" })
   lg.append("rect")
 	.style("fill", function(d) { return conc2color(d) })
 	.attr("x", - s / 2)
-	.attr("y", 2 * s)
+	.attr("y", 0)
 	.attr("width", 0)
 	.attr("height", s / 4)
 	.transition().duration(200)
@@ -153,8 +154,9 @@ function render() {
 
   lg.append("text")
 	//.style("fill", function(d) { return conc2color(d) })
+    .attr("class", "numb")
 	.attr("x", 0)
-	.attr("y", 2 * s)
+	.attr("y", 0)
 	.attr("dy", -3)
 	.style("text-anchor", "middle")
     .style("alignment-baseline", "bottom")
@@ -187,7 +189,7 @@ function render() {
             ") translate(0," + (- r0 - 50) + ")"
     })
   tick_layer.selectAll("text .tick").data(hours)
-      .enter().append("text").attr("class", "tick")
+      .enter().append("text").attr("class", "tick numb")
     .attr("fill", "#A0A0A0")
     .style("text-anchor", "middle")
     .style("alignment-baseline", "middle")
